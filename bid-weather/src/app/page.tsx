@@ -3,6 +3,7 @@ import RainfallChart from "@/components/RainfallChart";
 import BidCalendar from "@/components/Bidcalendar";
 import SectionTitle from "@/components/SectionTitle";
 import WeeklyWeather from "@/components/WeeklyWeather";
+import BidGraph from "@/components/BidGraph";
 
 export default function Home() {
   return (
@@ -26,6 +27,7 @@ export default function Home() {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <SectionTitle>입찰 공고 건 수 추이 및 예측 그래프</SectionTitle>
+          <BidGraph />
         </div>
 
         <div>
