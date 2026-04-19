@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import IcoReset from "@/assets/icons/ico_reset.svg";
-import IcoDelete from "@/assets/icons/ico_delete_fill.svg";
-import IcoAngle from "@/assets/icons/ico_angle.svg";
+import IcoReset from "@/assets/icons/Filter/ico_reset.svg";
+import IcoDelete from "@/assets/icons/Filter/ico_delete_fill.svg";
+import IcoAngle from "@/assets/icons/Filter/ico_angle.svg";
 
 export default function SearchFilter() {
   // 선택된 필터 상태 관리 (예시 데이터)
