@@ -5,10 +5,10 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 const pretendard = localFont({
-  src: "../../public/fonts/PretendardVariable.woff2", // public 폴더 기준 경로
+  src: "../../public/fonts/PretendardVariable.woff2",
   display: "swap",
-  weight: "45 920", // 가변 폰트(Variable)인 경우 가중치 범위 지정 가능
-  variable: "--font-pretendard", // CSS 변수명 정의 (Tailwind 연동용)
+  weight: "45 920",
+  variable: "--font-pretendard",
 });
 
 export const metadata: Metadata = {

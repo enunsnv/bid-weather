@@ -2,6 +2,7 @@ import SearchFilter from "@/components/SearchFilter";
 import RainfallChart from "@/components/RainfallChart";
 import BidCalendar from "@/components/Bidcalendar";
 import SectionTitle from "@/components/SectionTitle";
+import WeeklyWeather from "@/components/WeeklyWeather";
 
 export default function Home() {
   return (
@@ -10,12 +11,13 @@ export default function Home() {
         <SearchFilter />
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-20">
-        <div>
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-20">
+        <div className="lg:col-span-3">
           <SectionTitle>지난 7일 날씨</SectionTitle>
+          <WeeklyWeather />
         </div>
 
-        <div>
+        <div className="lg:col-span-2">
           <SectionTitle>지난 7일 강수량</SectionTitle>
           <RainfallChart />
         </div>
