@@ -12,9 +12,13 @@ const seed = [72, 15, 3, 88, 42, 20, 55];
 
 function generateData(): RainfallData[] {
   const today = new Date();
+
+  const base = new Date(today);
+  base.setDate(today.getDate() - 1);
+
   return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(today.getDate() - (6 - i));
+    const d = new Date(base);
+    d.setDate(base.getDate() - (6 - i));
     const mm = seed[i];
     const level =
       mm >= 70 ? "many" : mm >= 40 ? "normal" : mm >= 15 ? "few" : "none";
