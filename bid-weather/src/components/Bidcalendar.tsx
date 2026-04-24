@@ -115,7 +115,7 @@ export default function BidCalendar() {
   };
 
   return (
-    <div className="bg-white rounded-2xl p-5">
+    <div className="bg-white rounded-2xl p-5 h-[400px]">
       {/* Month navigation */}
       <div className="flex items-center gap-3 mb-3">
         <button
