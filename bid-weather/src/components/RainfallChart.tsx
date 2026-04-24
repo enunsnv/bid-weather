@@ -39,7 +39,7 @@ export default function RainfallChart() {
           className="flex flex-col justify-between pr-2 text-[11px] text-gray-400 text-right shrink-0"
           style={{ height: `${BAR_MAX_HEIGHT}px`, paddingBottom: "0px" }}
         >
-          {["많음", "보통", "적음"].map((label) => (
+          {["많음", "보통", "적음", " "].map((label) => (
             <span key={label}>{label}</span>
           ))}
         </div>
