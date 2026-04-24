@@ -36,7 +36,7 @@ export default function RainfallChart() {
       <div className="flex gap-0">
         {/* Y-axis labels */}
         <div
-          className="flex flex-col justify-between pr-2 text-[11px] text-gray-400 text-right shrink-0"
+          className="flex flex-col gap-5 pr-3 text-[11px] text-gray-400 text-right shrink-0"
           style={{ height: `${BAR_MAX_HEIGHT}px`, paddingBottom: "0px" }}
         >
           {["많음", "보통", "적음", " "].map((label) => (
@@ -45,10 +45,20 @@ export default function RainfallChart() {
         </div>
 
         {/* Chart area */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col relative">
+          {/* grid lines */}
+          <div className="absolute inset-0 pointer-events-none z-0">
+            {[7, 37, 67].map((top, i) => (
+              <div
+                key={i}
+                className="absolute w-full border-t border-gray-200"
+                style={{ top: `${top}%` }}
+              />
+            ))}
+          </div>
           {/* Bars */}
           <div
-            className="flex items-end gap-[6px] border-b border-gray-100"
+            className="flex items-end gap-[6px] border-b border-gray-100 z-10"
             style={{ height: `${BAR_MAX_HEIGHT}px` }}
           >
             {data.map(({ date, mm }) => {
