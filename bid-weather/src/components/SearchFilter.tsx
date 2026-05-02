@@ -8,7 +8,6 @@ import IcoAngle from "@/assets/icons/Filter/ico_angle.svg";
 export default function SearchFilter() {
   // 선택된 필터 상태 관리 (예시 데이터)
   const [activeFilters, setActiveFilters] = useState([
-    { id: 1, label: "대전광역시" },
     { id: 2, label: "공사" },
     { id: 3, label: "수해/침수 예방" },
   ]);
@@ -28,28 +27,7 @@ export default function SearchFilter() {
       {/* 검색 입력폼 (Search Top Box) */}
       <div className="bg-white rounded-2xl p-6 md:px-8 md:py-5">
         <div className="flex flex-col gap-4">
-          {/* 필터 폼 (Select Boxes) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-4/5">
-            <div className="flex items-center gap-3 w-full">
-              <label
-                className="text-[15px] font-bold text-gray-900 shrink-0 w-16"
-                htmlFor="appl-sch-sel1"
-              >
-                지역
-              </label>
-              <div className="relative flex-1">
-                <select
-                  id="appl-sch-sel1"
-                  className="appearance-none w-full h-12 px-4 pr-10 border border-gray-300 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
-                >
-                  <option value="">전체</option>
-                  <option value="daejeon">대전광역시</option>
-                  <option value="seoul">서울특별시</option>
-                </select>
-                <IcoAngle className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-500 pointer-events-none" />
-              </div>
-            </div>
-
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 w-4/5">
             <div className="flex items-center gap-3 w-full">
               <label
                 className="text-[15px] font-bold text-gray-900 shrink-0 w-16"
@@ -132,7 +110,6 @@ export default function SearchFilter() {
           </div>
         </div>
       </div>
-      {/* //검색 입력폼 */}
     </div>
   );
 }
