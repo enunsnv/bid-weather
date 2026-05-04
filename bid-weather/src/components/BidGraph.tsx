@@ -43,7 +43,7 @@ const generateDummyData = (): ApiDataPoint[] => {
 
   // 예측 데이터 구간
   let predictVal = lastActualValue;
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 1; i++) {
     predictVal = Math.max(5, predictVal + Math.floor(Math.random() * 20 - 8));
     const period = `${year}-${String(month).padStart(2, "0")}`;
     data.push({ period, actualCount: null, predictCount: predictVal });
