@@ -1,38 +1,40 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { usePredictionCalendar } from "@/hooks/useApi";
 import { usePredictionSse } from "@/hooks/useSse";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
-function getIntensity(count: number | undefined): 0 | 1 | 2 | 3 {
-  if (!count) return 0;
-  if (count < 10) return 1;
-  if (count < 30) return 2;
-  return 3;
+function makeGetIntensity(maxCount: number) {
+  return (count: number | undefined): 0 | 1 | 2 | 3 | 4 => {
+    if (!count) return 0;
+    if (maxCount <= 0) return 0;
+    const ratio = count / maxCount;
+    if (ratio < 0.25) return 1;
+    if (ratio < 0.5) return 2;
+    if (ratio < 0.75) return 3;
+    return 4;
+  };
 }
 
 const intensityClasses = {
   0: "bg-transparent text-gray-400",
-  1: "bg-blue-200 text-blue-700",
-  2: "bg-blue-400 text-white",
-  3: "bg-blue-600 text-white",
+  1: "bg-blue-100 text-blue-700",
+  2: "bg-blue-300 text-blue-900",
+  3: "bg-blue-500 text-white",
+  4: "bg-blue-700 text-white",
 };
-
-function getDaysInMonth(year: number, month: number) {
-  return new Date(year, month + 1, 0).getDate();
-}
-
-function getFirstDayOfMonth(year: number, month: number) {
-  return new Date(year, month, 1).getDay();
-}
 
 function toKey(year: number, month: number, day: number) {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(
     2,
     "0",
   )}`;
+}
+
+function startOfDay(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
 interface Props {
@@ -52,19 +54,55 @@ export default function BidCalendar({ categoryId, subcategoryId }: Props) {
     predictions.map((item) => [item.date, item.count]),
   );
 
-  const availableMonths = useMemo(() => {
-    return Array.from(
-      new Set(
-        predictions.map((item) => {
-          const d = new Date(item.date);
+  const maxCount = predictions.reduce(
+    (max, item) => (item.count > max ? item.count : max),
+    0,
+  );
 
-          return `${d.getFullYear()}-${d.getMonth()}`;
-        }),
-      ),
+  const getIntensity = makeGetIntensity(maxCount);
+
+  const { weeks, firstDate, lastDate, isEmpty } = useMemo(() => {
+    if (predictions.length === 0) {
+      return {
+        weeks: [] as { date: Date; inRange: boolean }[][],
+        firstDate: null as Date | null,
+        lastDate: null as Date | null,
+        isEmpty: true,
+      };
+    }
+
+    const sorted = [...predictions].sort((a, b) =>
+      a.date.localeCompare(b.date),
     );
-  }, [predictions]);
+    const first = startOfDay(new Date(sorted[0].date));
+    const last = startOfDay(new Date(sorted[sorted.length - 1].date));
 
-  const [currentIndex, setCurrentIndex] = useState(0);
+    const start = new Date(first);
+    start.setDate(start.getDate() - start.getDay());
+
+    const end = new Date(last);
+    end.setDate(end.getDate() + (6 - end.getDay()));
+
+    const cells: { date: Date; inRange: boolean }[] = [];
+    for (
+      let d = new Date(start);
+      d <= end;
+      d.setDate(d.getDate() + 1)
+    ) {
+      const cur = new Date(d);
+      cells.push({
+        date: cur,
+        inRange: cur >= first && cur <= last,
+      });
+    }
+
+    const result: { date: Date; inRange: boolean }[][] = [];
+    for (let i = 0; i < cells.length; i += 7) {
+      result.push(cells.slice(i, i + 7));
+    }
+
+    return { weeks: result, firstDate: first, lastDate: last, isEmpty: false };
+  }, [predictions]);
 
   if (isLoading) {
     return (
@@ -74,109 +112,27 @@ export default function BidCalendar({ categoryId, subcategoryId }: Props) {
     );
   }
 
-  const isEmpty = availableMonths.length === 0;
+  const isCompact = weeks.length >= 6;
 
-  const current = isEmpty
-    ? `${today.getFullYear()}-${today.getMonth()}`
-    : availableMonths[currentIndex];
-
-  const [year, month] = current.split("-").map(Number);
-
-  const daysInMonth = getDaysInMonth(year, month);
-  const firstDay = getFirstDayOfMonth(year, month);
-
-  const cells: {
-    day: number;
-    monthType: "prev" | "cur" | "next";
-  }[] = [];
-
-  // 이전달 채우기
-  const prevMonthDays = getDaysInMonth(year, month - 1);
-
-  for (let i = firstDay - 1; i >= 0; i--) {
-    cells.push({
-      day: prevMonthDays - i,
-      monthType: "prev",
-    });
-  }
-
-  // 현재달
-  for (let d = 1; d <= daysInMonth; d++) {
-    cells.push({
-      day: d,
-      monthType: "cur",
-    });
-  }
-
-  // 다음달 채우기
-  const remaining = 42 - cells.length;
-
-  for (let d = 1; d <= remaining; d++) {
-    cells.push({
-      day: d,
-      monthType: "next",
-    });
-  }
-
-  // week 단위로 분리
-  const weeks = [];
-
-  for (let i = 0; i < 42; i += 7) {
-    weeks.push(cells.slice(i, i + 7));
-  }
-
-  // 마지막 주가 전부 next면 제거
-  const lastWeek = weeks[weeks.length - 1];
-
-  if (lastWeek.every((cell) => cell.monthType === "next")) {
-    weeks.pop();
-  }
-
-  // 6주 여부
-  const isSixWeeks = weeks.length === 6;
-
-  const canGoPrev = !isEmpty && currentIndex > 0;
-  const canGoNext = !isEmpty && currentIndex < availableMonths.length - 1;
+  const headerLabel =
+    firstDate && lastDate
+      ? firstDate.getFullYear() === lastDate.getFullYear() &&
+        firstDate.getMonth() === lastDate.getMonth()
+        ? `${firstDate.getFullYear()}년 ${firstDate.getMonth() + 1}월`
+        : `${firstDate.getFullYear()}년 ${firstDate.getMonth() + 1}월 ${firstDate.getDate()}일 ~ ${
+            firstDate.getFullYear() !== lastDate.getFullYear()
+              ? `${lastDate.getFullYear()}년 `
+              : ""
+          }${lastDate.getMonth() + 1}월 ${lastDate.getDate()}일`
+      : `${today.getFullYear()}년 ${today.getMonth() + 1}월`;
 
   return (
     <div className="bg-white rounded-2xl p-5 min-h-[400px] flex flex-col relative">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-2">
-        <button
-          onClick={() => canGoPrev && setCurrentIndex((v) => v - 1)}
-          disabled={!canGoPrev}
-          className={`
-            w-7 h-7 rounded-full flex items-center justify-center
-            transition-all
-            ${
-              canGoPrev
-                ? "hover:bg-gray-100 text-gray-500"
-                : "text-gray-300 cursor-not-allowed"
-            }
-          `}
-        >
-          ‹
-        </button>
-
+      <div className="flex items-center mb-2">
         <span className="text-[14px] font-semibold text-gray-700">
-          {year}년 {month + 1}월
+          {headerLabel}
         </span>
-
-        <button
-          onClick={() => canGoNext && setCurrentIndex((v) => v + 1)}
-          disabled={!canGoNext}
-          className={`
-            w-7 h-7 rounded-full flex items-center justify-center
-            transition-all
-            ${
-              canGoNext
-                ? "hover:bg-gray-100 text-gray-500"
-                : "text-gray-300 cursor-not-allowed"
-            }
-          `}
-        >
-          ›
-        </button>
       </div>
 
       {/* Weekdays */}
@@ -196,49 +152,38 @@ export default function BidCalendar({ categoryId, subcategoryId }: Props) {
         {weeks.map((week, wIdx) => (
           <div key={wIdx} className="grid grid-cols-7">
             {week.map((cell, idx) => {
-              const isCur = cell.monthType === "cur";
-
-              const key = isCur
-                ? toKey(year, month, cell.day)
-                : cell.monthType === "next"
-                  ? toKey(
-                      month === 11 ? year + 1 : year,
-                      (month + 1) % 12,
-                      cell.day,
-                    )
-                  : toKey(
-                      month === 0 ? year - 1 : year,
-                      (month - 1 + 12) % 12,
-                      cell.day,
-                    );
-
-              const count = bidCounts[key];
-
-              const intensity = isCur ? getIntensity(count) : 0;
+              const y = cell.date.getFullYear();
+              const m = cell.date.getMonth();
+              const d = cell.date.getDate();
+              const key = toKey(y, m, d);
+              const count = cell.inRange ? bidCounts[key] : undefined;
+              const intensity = cell.inRange ? getIntensity(count) : 0;
 
               const isToday =
-                isCur &&
-                cell.day === today.getDate() &&
-                month === today.getMonth() &&
-                year === today.getFullYear();
+                cell.inRange &&
+                d === today.getDate() &&
+                m === today.getMonth() &&
+                y === today.getFullYear();
+
+              const showMonthLabel = d === 1 || (wIdx === 0 && idx === 0);
 
               return (
                 <div key={idx} className="flex flex-col items-center py-[1px]">
                   {/* 날짜 */}
                   <span
                     className={`text-[11px] mb-[2px] ${
-                      isCur ? "text-gray-500" : "text-gray-300"
+                      cell.inRange ? "text-gray-500" : "text-gray-300"
                     }`}
                   >
-                    {cell.day}
+                    {showMonthLabel ? `${m + 1}/${d}` : d}
                   </span>
 
                   {/* Count */}
-                  {isCur && count ? (
+                  {cell.inRange && count ? (
                     <div
                       className={`
                         ${
-                          isSixWeeks
+                          isCompact
                             ? "w-6 h-6 text-[10px]"
                             : "w-8 h-8 text-[11px]"
                         }
@@ -253,7 +198,7 @@ export default function BidCalendar({ categoryId, subcategoryId }: Props) {
                   ) : (
                     <div
                       className={`
-                        ${isSixWeeks ? "w-6 h-6" : "w-8 h-8"}
+                        ${isCompact ? "w-6 h-6" : "w-8 h-8"}
                       `}
                     />
                   )}
