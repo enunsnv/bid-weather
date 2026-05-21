@@ -54,7 +54,6 @@ export default function BidGraph({ categoryId, subcategoryId }: BidGraphProps) {
   } = usePredictionGraph(categoryId, subcategoryId);
 
   const data = useMemo<ApiDataPoint[]>(() => {
-    // rawData나 graphData가 없으면 빈 배열 반환
     if (!rawData || !rawData.graphData) return [];
 
     const processedData = [...rawData.graphData];
@@ -125,7 +124,9 @@ export default function BidGraph({ categoryId, subcategoryId }: BidGraphProps) {
             axisLine={false}
             tickLine={false}
             tick={{ fontSize: 12, fill: "#9CA3AF" }}
-            dx={-10}
+            dx={-4}
+            width={70}
+            tickFormatter={(value) => value.toLocaleString()}
           />
 
           <Tooltip
