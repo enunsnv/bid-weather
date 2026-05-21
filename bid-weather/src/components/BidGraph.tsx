@@ -17,6 +17,7 @@ interface ApiDataPoint {
   period: string;
   actualCount: number | null;
   predictCount: number | null;
+  partialActual?: number;
 }
 
 interface BidGraphProps {
@@ -35,10 +36,19 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       <div className="bg-white p-3 rounded-lg shadow-md border border-gray-100">
         <p className="text-gray-700 font-bold mb-2">{label}</p>
         {filteredPayload.map((entry: any, index: number) => (
-          <p key={index} className="text-sm m-0" style={{ color: entry.color }}>
-            {entry.dataKey === "actualCount" ? "실제 데이터" : "예측 데이터"} :{" "}
-            {entry.value} 건
-          </p>
+          <div key={index} className="mb-1 last:mb-0">
+            <p className="text-sm m-0" style={{ color: entry.color }}>
+              {entry.dataKey === "actualCount" ? "실제 데이터" : "예측 데이터"}{" "}
+              : {entry.value.toLocaleString()} 건
+            </p>
+            {entry.payload.partialActual !== undefined &&
+              entry.dataKey === "predictCount" && (
+                <p className="text-xs text-gray-500 mt-1 m-0">
+                  (어제까지 집계: {entry.payload.partialActual.toLocaleString()}{" "}
+                  건)
+                </p>
+              )}
+          </div>
         ))}
       </div>
     );
@@ -53,26 +63,43 @@ export default function BidGraph({ categoryId, subcategoryId }: BidGraphProps) {
     isError,
   } = usePredictionGraph(categoryId, subcategoryId);
 
-  const data = useMemo<ApiDataPoint[]>(() => {
-    if (!rawData || !rawData.graphData) return [];
+  const { data, splitPoint } = useMemo(() => {
+    if (!rawData || !rawData.graphData) return { data: [], splitPoint: null };
 
-    const processedData = [...rawData.graphData];
+    const processedData: ApiDataPoint[] = rawData.graphData.map((d: any) => ({
+      ...d,
+    }));
+    let splitPeriod: string | null = null;
 
-    let lastActualIndex = -1;
-    for (let i = 0; i < processedData.length; i++) {
-      if (processedData[i].actualCount !== null) {
-        lastActualIndex = i;
+    const currentIndex = processedData.findIndex(
+      (d) => d.actualCount !== null && d.predictCount !== null,
+    );
+
+    if (currentIndex !== -1) {
+      const currentItem = processedData[currentIndex];
+
+      splitPeriod =
+        currentIndex > 0
+          ? processedData[currentIndex - 1].period
+          : currentItem.period;
+
+      const partialActual = currentItem.actualCount || 0;
+      const partialPredict = currentItem.predictCount || 0;
+
+      currentItem.predictCount = partialActual + partialPredict;
+      currentItem.partialActual = partialActual;
+      currentItem.actualCount = null;
+
+      if (
+        currentIndex > 0 &&
+        processedData[currentIndex - 1].actualCount !== null
+      ) {
+        processedData[currentIndex - 1].predictCount =
+          processedData[currentIndex - 1].actualCount;
       }
     }
 
-    if (lastActualIndex !== -1 && lastActualIndex + 1 < processedData.length) {
-      processedData[lastActualIndex] = {
-        ...processedData[lastActualIndex],
-        predictCount: processedData[lastActualIndex].actualCount,
-      };
-    }
-
-    return processedData;
+    return { data: processedData, splitPoint: splitPeriod };
   }, [rawData]);
 
   if (isLoading) {
@@ -90,10 +117,6 @@ export default function BidGraph({ categoryId, subcategoryId }: BidGraphProps) {
       </div>
     );
   }
-
-  const splitPoint = data.find(
-    (d) => d.actualCount !== null && d.predictCount !== null,
-  )?.period;
 
   const formatXAxis = (tickItem: any) => {
     if (!tickItem || typeof tickItem !== "string") return "";
@@ -149,6 +172,7 @@ export default function BidGraph({ categoryId, subcategoryId }: BidGraphProps) {
             strokeWidth={1.5}
             dot={false}
             activeDot={{ r: 4, fill: "#4B5563", strokeWidth: 0 }}
+            connectNulls={true}
           />
 
           <Line
@@ -158,6 +182,7 @@ export default function BidGraph({ categoryId, subcategoryId }: BidGraphProps) {
             strokeWidth={1.5}
             dot={false}
             activeDot={{ r: 4, fill: "#3B82F6", strokeWidth: 0 }}
+            connectNulls={true}
           />
         </LineChart>
       </ResponsiveContainer>
