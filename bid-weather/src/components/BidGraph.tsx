@@ -27,29 +27,35 @@ interface BidGraphProps {
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
-    const filteredPayload =
-      payload.length > 1
-        ? payload.filter((p: any) => p.dataKey === "predictCount")
-        : payload;
+    const actualData = payload.find(
+      (p: any) => p.dataKey === "actualCount" && p.value !== null,
+    );
+    const predictData = payload.find(
+      (p: any) => p.dataKey === "predictCount" && p.value !== null,
+    );
+
+    const targetData = actualData || predictData;
+
+    if (!targetData) return null;
 
     return (
       <div className="bg-white p-3 rounded-lg shadow-md border border-gray-100">
         <p className="text-gray-700 font-bold mb-2">{label}</p>
-        {filteredPayload.map((entry: any, index: number) => (
-          <div key={index} className="mb-1 last:mb-0">
-            <p className="text-sm m-0" style={{ color: entry.color }}>
-              {entry.dataKey === "actualCount" ? "실제 데이터" : "예측 데이터"}{" "}
-              : {entry.value.toLocaleString()} 건
-            </p>
-            {entry.payload.partialActual !== undefined &&
-              entry.dataKey === "predictCount" && (
-                <p className="text-xs text-gray-500 mt-1 m-0">
-                  (어제까지 집계: {entry.payload.partialActual.toLocaleString()}{" "}
-                  건)
-                </p>
-              )}
-          </div>
-        ))}
+        <div className="mb-1 last:mb-0">
+          <p className="text-sm m-0" style={{ color: targetData.color }}>
+            {targetData.dataKey === "actualCount"
+              ? "실제 데이터"
+              : "예측 데이터"}{" "}
+            : {targetData.value.toLocaleString()} 건
+          </p>
+          {targetData.payload.partialActual !== undefined &&
+            targetData.dataKey === "predictCount" && (
+              <p className="text-xs text-gray-500 mt-1 m-0">
+                (어제까지 집계:{" "}
+                {targetData.payload.partialActual.toLocaleString()} 건)
+              </p>
+            )}
+        </div>
       </div>
     );
   }
