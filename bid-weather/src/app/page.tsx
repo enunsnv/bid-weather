@@ -55,8 +55,10 @@ export default function Home() {
 
         <div>
           <SectionTitle>입찰 공고 건 수 예측 달력</SectionTitle>
-          {/* BidCalendar에도 필터 상태를 전달해 줍니다 */}
-          <BidCalendar />
+          <BidCalendar
+            categoryId={selectedCategory}
+            subcategoryId={selectedSubCategory}
+          />
         </div>
       </div>
     </>
